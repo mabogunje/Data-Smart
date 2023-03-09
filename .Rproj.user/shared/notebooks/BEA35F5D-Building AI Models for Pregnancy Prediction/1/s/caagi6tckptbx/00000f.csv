@@ -1,0 +1,5 @@
+"0","# Hardcode the US repo for CRAN"
+"0","r <-getOption(""repos"");"
+"0","r[""CRAN""] <- ""http://cran.us.r-project.org"";"
+"0","options(repos = r);"
+"0","rm(r);"

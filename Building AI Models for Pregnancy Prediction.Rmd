@@ -1,0 +1,108 @@
+---
+title: "Building AI Models for Pregnancy Prediction"
+author: "Damola Mabogunje"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r Setup CRAN Library for importing Libraries & Packages}
+# Hardcode the US repo for CRAN
+r <-getOption("repos");
+r["CRAN"] <- "http://cran.us.r-project.org";
+options(repos = r);
+rm(r);
+```
+
+## Introduction
+
+This R Markdown document replicates the work done in chapters 6 & 7 of the Data Smart book by John W. Foreman which treats the techniques of Regression and Ensemble Modelling using Excel. 
+
+Here, we're going to be using R to achieve the same goal by calling on thev powers of the glm ("general linear modelling") function and the random forest library as well as the ROCR library for analyzing the performance of our models.
+
+But first, we must import our libraries and prepare our data!
+
+```{r Install & Import required libraries}
+
+install.packages("randomForest", dependencies = TRUE);
+install.packages("ROCR", dependencies = TRUE);
+library(randomForest);
+library(ROCR);
+```
+
+Libraries imported. Now we can prep the data.
+
+```{r Read in & Prep the Data}
+
+# Read in the Pregnancy Data 
+PregnancyData <- read.csv("data/Pregnancy.csv");
+PregnancyData.Test <- read.csv("data/Pregnancy_Test.csv");
+
+str(PregnancyData); # Data check
+
+# Correctly Interpret Categorical fields as such
+PregnancyData$Implied.Gender <- factor(PregnancyData$Implied.Gender);
+PregnancyData$Home.Apt..PO.Box <- factor(PregnancyData$Home.Apt..PO.Box);
+PregnancyData$PREGNANT <- factor(PregnancyData$PREGNANT);
+PregnancyData.Test$Implied.Gender <- factor(PregnancyData.Test$Implied.Gender);
+PregnancyData.Test$Home.Apt..PO.Box <- factor(PregnancyData.Test$Home.Apt..PO.Box);
+PregnancyData.Test$PREGNANT <- factor(PregnancyData.Test$PREGNANT);
+
+str(PregnancyData.Test); # Data check
+
+```
+
+## Modelling
+
+Now we have our data. Let us create our models
+
+```{r Creating our AI Models}
+
+# General Linear Model (Logistic Regression)
+Pregnancy.lm <- glm(PREGNANT ~ ., data = PregnancyData, family = binomial("logit"));
+
+# Ensemble / Random Forest Model
+Pregnancy.rf <- randomForest(PREGNANT ~ ., data = PregnancyData, importance = TRUE);
+
+summary(Pregnancy.lm); # Check Model
+```
+
+## Predicting with our Models
+
+Now we use our models to predict the PREGNANT field using all other fields.
+
+```{r Predicting outcomes}
+
+## Predictions on Test Data using Random Forest Model
+PregnancyData.Test.rf.Preds <- predict(Pregnancy.rf, PregnancyData.Test, type = "prob");
+
+## Predictions on Test Data using Linear Regression Model
+PregnancyData.Test.lm.Preds <- predict(Pregnancy.lm, PregnancyData.Test, type = "response")
+
+# Plot Predictive Strength of Variables Used to Predict Pregnancy
+varImpPlot(Pregnancy.rf, type = 2); 
+```
+
+## Measuring the Performance of Our Models
+
+Now we want to look at how well our models trained on the *PregnancyData*, performed on predicting the Pregnancy outcomes of the *PregnancyData.Test*.
+
+```{r Measuring our Predictions}
+
+# Linear Regression Model's Predictions
+pred.lm <- prediction(PregnancyData.Test.lm.Preds, PregnancyData.Test$PREGNANT);
+
+# Random Forest's Predictions
+pred.rf <- prediction(PregnancyData.Test.rf.Preds[,2], PregnancyData.Test$PREGNANT);
+
+# Measuring Performance via True Positive Rate (tpr) and False Positive Rate (fpr);
+perf.lm <- performance(pred.lm, "tpr", "fpr");
+perf.rf <- performance(pred.rf, "tpr", "fpr");
+
+## Plotting Performance
+plot(perf.lm, xlim=c(0,1), ylim=c(0,1));
+plot(perf.rf, xlim=c(0,1), ylim=c(0,1), lty=2, add=TRUE)
+```
+
+## Conclusion
+
+In Conclusion, we can see that both models provide similar levels of efficacy on the same training and test data, with the logistic regression performing a little bit better in the beginning and mid sections. 

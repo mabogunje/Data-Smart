@@ -1,0 +1,4 @@
+"0","winedata.clusters <- skmeans(winedata.transposed,k=5,method=""genetic"");"
+"0","winedata.clustercounts <- t(aggregate(winedata.transposed,by=list(winedata.clusters$cluster),sum)[,2:33]);"
+"0","winedata.desc.plus.counts <- cbind(winedata[,1:7],winedata.clustercounts);"
+"0","winedata.desc.plus.counts;"

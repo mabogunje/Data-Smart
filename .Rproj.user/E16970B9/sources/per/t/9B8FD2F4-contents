@@ -1,0 +1,66 @@
+---
+title: "Wine K Means Clustering in R"
+author: "Damola Mabogunje"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Introduction
+
+This R Markdown document replicates the work done in chapter 2 of the Data Smart book by John W. Foreman which treats the technique of K Means Clustering using Excel. Here, we're going to be using R to achieve the same goal. But it must be noted that the first step of preparing a deal space matrix of the customers and which deals they took has already been done and exported to CSV in the *WineKMC.csv* file. Now we begin the work of data prep
+
+```{r preparing the data and libraries we need}
+# Hardcode the US repo for CRAN
+r <-getOption("repos");
+r["CRAN"] <- "http://cran.us.r-project.org";
+options(repos = r);
+rm(r);
+
+# Install and import the K-means library
+install.packages("skmeans", dependencies = TRUE);
+library(skmeans);
+
+# Read in the deals matrix & Convert all NA fields to 0s
+winedata <- read.csv("data/WineKMC.csv");
+winedata[is.na(winedata)] <- 0;
+winedata.transposed <- t(winedata[,8:107]); # Grab just the deals data
+winedata.transposed[1:10,1:10];
+```
+## Our Wine Data is Ready. Let's begin clustering
+
+At the beginning of this document, we installed the **skmeans package**
+This is the library that we are going to use to do our clustering work.
+It comes down to a simple function. But as we'll see, the results allow us to interpret our data just as was done in chapter 2 of the Data Smart book.
+
+```{r Clustering the data}
+winedata.clusters <- skmeans(winedata.transposed,k=5,method="genetic");
+winedata.clustercounts <- t(aggregate(winedata.transposed,by=list(winedata.clusters$cluster),sum)[,2:33]);
+winedata.desc.plus.counts <- cbind(winedata[,1:7],winedata.clustercounts);
+winedata.desc.plus.counts;
+```
+
+## What Do The Clusters Mean?
+
+Now we can see our wine data next to their clusters and begin to ask questions of the clusters. What do they mean? Who is represented? How can we capitalize on this knowledge?
+
+```{r Who is represented in our clusters?}
+winedata.desc.plus.counts[order(-winedata.desc.plus.counts[,8]),];
+winedata.desc.plus.counts[order(-winedata.desc.plus.counts[,9]),];
+winedata.desc.plus.counts[order(-winedata.desc.plus.counts[,10]),];
+winedata.desc.plus.counts[order(-winedata.desc.plus.counts[,11]),];
+winedata.desc.plus.counts[order(-winedata.desc.plus.counts[,12]),];
+```
+
+## Conclusion
+
+After sorting the vvarious clusters to see who stands out, I can tell the following:
+
+- Cluster 1 are Minimum quantity buyers, they go for the deals with the lowest quantity.
+- Cluster 2 are fans of Champagne and/or France
+- Cluster 3 I'm not sure about
+- Cluster 4 are fans of Pinot Noir
+- Cluster 5 prefer the Espumante
+
+Since the clustering algorithm is genetic, you might not get this same order of clusters, but their features should be the same. A Minimum Quantity group, A Champagne group, A Pinot Noir group, and so on.
+
+Thank you for walking through this exercise with me. I hope you found it useful.

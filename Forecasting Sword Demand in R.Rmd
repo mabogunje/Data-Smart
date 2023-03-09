@@ -1,0 +1,56 @@
+---
+title: "Forecasting Sword Demand in R"
+author: "Damola Mabogunje"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r Setup CRAN Repo for importing Libraries & Packages}
+# Hardcode the US repo for CRAN
+r <-getOption("repos");
+r["CRAN"] <- "http://cran.us.r-project.org";
+options(repos = r);
+rm(r);
+```
+
+## Introduction
+
+This R Markdown document replicates the work done in chapter 8 of the Data Smart book by John W. Foreman which treats the technique of Time Series Forecasting using Excel. 
+
+Here, we're going to be using R to achieve the same goal, and I hear that it's pretty short and sweet. So hold on to your britches as we import the forecast library and load up the data.
+
+```{r Import forecast library}
+
+install.packages("forecast", dependencies = TRUE);
+library(forecast);
+
+```
+
+Now we load and prep the data
+
+```{r Load and Prep Sword Demand Data}
+
+sword <- read.csv("data/SwordDemand.csv");
+
+# Convert to Time Series Data
+sword.ts <- ts(sword, frequency = 12, start = c(2010, 1));
+
+# Plot Time Series Data
+plot(sword.ts);
+
+```
+
+## Time to Forecast
+
+With the Sword Demand data now in time-series format, we can feed it into the forecast function.
+
+```{r Forecast Away!}
+
+sword.forecast <- forecast(sword.ts);
+plot(sword.forecast);
+
+```
+
+## Conclusion
+
+And we're done! In just a few lines we converted a dataset into a Time Series in R, and were able to forecast ahead based on that data. This may be the simplest implementation so far.
