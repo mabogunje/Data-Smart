@@ -1,0 +1,50 @@
+---
+title: "Identifying Outliers in Call Center Employee Performance Data"
+author: "Damola Mabogunje"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r Setup CRAN Repo for importing Libraries & Packages}
+# Hardcode the US repo for CRAN
+r <-getOption("repos");
+r["CRAN"] <- "http://cran.us.r-project.org";
+options(repos = r);
+rm(r);
+```
+
+## Introduction
+
+This R Markdown document replicates some of the work done in chapter 9 of the Data Smart book by John W. Foreman which treats the technique of Outlier Detection using Excel. 
+
+Here, we're going to be using R to achieve the same goal. Specifically, we'll be looking at analyzing Call Center Employee Performance Data such as Tardiness, Number of Tickets resolved, Sick Days Taken, and so on.
+
+Let's load up the libraries and data we need
+
+```{r Load up libraries and prep the Call Center Data}
+
+install.packages("DMwR2", dependencies = TRUE);
+library(DMwR2);
+
+CallCenter <- read.csv("data/CallCenter.csv");
+summary(CallCenter); # Check Data
+
+## Scale & Center the Data (By subtracting the mean and dividing by the standard deviation)
+CallCenter.scale <- scale(CallCenter[2:11]);
+summary(CallCenter.scale); # Check Scaled Data
+
+```
+
+## Conclusion
+
+Now that our data is loaded and scaled appropriately, we can use the *DMwR2* library to determine the outlier employees
+
+```{r Determining the Outliers}
+
+CallCenter.lof <- lofactor(CallCenter.scale, 5); # K Nearest Neighbours where K = 5 (Local Outlier Factor)
+which(CallCenter.lof > 1.5); # Outlier Indexes
+CallCenter[which(CallCenter.lof > 1.5),]; # Outliers
+```
+As you can see, the same two employees that were identified in chapter 9, are highlighted by the lofactor function. One who is doing very well and one who is performing poorly. I hope this walkthrough can serve as a good reminder of what was covered in this chapter of the book for anyone who needs it.
+
+Thank you for reading.

@@ -1,0 +1,73 @@
+---
+title: "Identifying Outliers in Pregnancy Duration using R"
+author: "Damola Mabogunje"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r Setup CRAN Repo for importing Libraries & Packages}
+# Hardcode the US repo for CRAN
+r <-getOption("repos");
+r["CRAN"] <- "http://cran.us.r-project.org";
+options(repos = r);
+rm(r);
+```
+
+## Introduction
+
+This R Markdown document replicates some of the work done in chapter 9 of the Data Smart book by John W. Foreman which treats the technique of Outlier Detection using Excel. 
+
+Here, we're going to be using R to achieve the same goal. Specifically, we'll be looking at the case of Hadlum v. Hadlum and determining whether the Hadlum wife's pregnancy was unlikely to be from the Hadlum husband.
+
+Let's load up the data from the PregnancyDuration csv.
+
+```{r Load up Pregnancy Durations & Calculate Tukey Fences}
+
+PregnancyDuration <- read.csv("data/PregnancyDuration.csv");
+summary(PregnancyDuration); # Check Data
+
+## Calculate the InterQuartile range (IQR)
+PregnancyDuration.IQR <- IQR(PregnancyDuration$GestationDays);
+
+## Calculate the Lower & Upper Tukey Fences
+PregnancyDuration.LowerInnerFence <- 260 - 1.5*PregnancyDuration.IQR;
+PregnancyDuration.UpperInnerFence <- 272 + 1.5*PregnancyDuration.IQR;
+
+```
+
+## Determine Outliers and Visualize them
+
+Now that we have the Tukey Fences, we can identify outliers as those values that are greater or less than them respectively.
+
+```{r Identifying Outliers}
+
+OutlierIndexes <- which(PregnancyDuration$GestationDays > PregnancyDuration.UpperInnerFence);
+
+OutlierValues <- PregnancyDuration$GestationDays[OutlierIndexes];
+OutlierValues;
+```
+
+But just looking at the figures isn't all that exciting. Let's visualize these numbers.
+
+```{r Visualizing Outliers}
+
+boxplot(PregnancyDuration$GestationDays); # Uses the Inner Fences
+boxplot(PregnancyDuration$GestationDays, range = 3) # Uses Outer Fences
+
+```
+
+## Conclusion
+
+Boxploting with the outer Tukey Fences, we can clearly see that Mrs. Hadlum's pregnancy duration was a significant outlier and unlikely to be Mr. Hadlum's progeny. Below are the raw figures if you want to pull them out of the boxplot.
+
+```{r Raw figures from boxplot}
+
+# Tukey Fences & All
+boxplot(PregnancyDuration$GestationDays, range = 3)$stats;
+
+# Outliers based on the Outer Fence 
+boxplot(PregnancyDuration$GestationDays, range = 3)$out;
+
+```
+
+
